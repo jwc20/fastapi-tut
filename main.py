@@ -1,6 +1,10 @@
 from enum import Enum
 from fastapi import FastAPI  # import fastapi
 from pydantic import BaseModel
+from typing import Annotated
+from fastapi import FastAPI, Query
+from pydantic import AfterValidator
+import random
 
 
 class ModelName(str, Enum):
@@ -200,17 +204,212 @@ async def update_item(item_id: int, item: Item, q: str | None = None):
         result.update({"q": q})
     return result
 
+# ---------------------------------------------------------
+
+# @app.get("/items/")
+# async def read_items(q: str | None = None):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+# ---------------------------------------------------------
+
+# query parameters and string validations
+
+# from typing import Annotated
+# from fastapi import FastAPI, Query
+
+# Annotated is used to add metadata to parameters
+
+# we are adding validation to check if the query parameter q is of length 50
+
+# @app.get("/items/")
+# async def read_items(q: Annotated[str | None, Query(max_length=50)] = None):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+# ---------------------------------------------------------
+
+# query as the default value or in Annotated
+
+# this is not allowed, since it's not clear if the default value is rick or morty 
+# q: Annotated[str, Query(default="rick")] = "morty"
+
+# should be
+# q: Annotated[str, Query()] = "rick"
+
+# Using Annotated is recommended instead of the default value in function parameters, it is better for multiple reasons. 🤓
+
+
+# ---------------------------------------------------------
+
+# add more validations
+# @app.get("/items/")
+# async def read_items(q: Annotated[str | None, Query(min_length=3 , max_length=50)] = None):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+### add regular expressions
+# @app.get("/items/")
+# async def read_items(
+#     q: Annotated[
+#         str | None, Query(min_length=3, max_length=50, pattern="^fixedquery$")
+#     ] = None,
+# ):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+
+### changing the default value of q
+# async def read_items(q: Annotated[str | None, Query(min_length=3 , max_length=50)] = "CHANGED_DEFAULT_VALUE):
+
+### make the query parameter q required
+# by not declaring the default value and not declaring the None value type
+# async def read_items(q: Annotated[str, Query(min_length=3 , max_length=50)]):
+
+### we can make change to accept None by declaring the None value type and not declaring the default value
+# async def read_items(q: Annotated[str | None, Query(min_length=3 , max_length=50)]):
+
+### we can define the query parameter to receive list of values
+# async def read_items(q: Annotated[list[str] | None, Query()] = None):
+### then the url will be http://localhost:8000/items/?q=foo&q=bar
+
+### we can define multiple default values if we are receiving list of values
+# async def read_items(q: Annotated[list[str], Query()] = ["foo", "bar"]):
+
+# ---------------------------------------------------------
+
+# declare more metadata for api documentation
+# @app.get("/items/")
+# async def read_items(
+#     q: Annotated[
+#         str | None,
+#         Query(
+#             title="Query string",
+#             description="Query string for the items to search in the database that have a good match",
+#             min_length=3,
+#         ),
+#     ] = None,
+# ):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+# 
+
+# ---------------------------------------------------------
+"""
+Imagine that you want the parameter to be item-query.
+
+Like in:
+
+
+http://127.0.0.1:8000/items/?item-query=foobaritems
+But item-query is not a valid Python variable name.
+
+The closest would be item_query.
+
+But you still need it to be exactly item-query...
+
+Then you can declare an alias, and that alias is what will be used to find the parameter value:
+"""
+
+# @app.get("/items/")
+# async def read_items(
+#     q: Annotated[
+#         str | None,
+#         Query(
+#             title="Query string",
+#             description="Query string for the items to search in the database that have a good match",
+#             min_length=3,
+#             alias="item-query",
+#         ),
+#     ] = None,
+# ):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+# ---------------------------------------------------------
+
+# show the path as deprecated in api doc
+# Query(deprecated=True)
+
+# @app.get("/items/")
+# async def read_items(
+#     q: Annotated[
+#         str | None,
+#         Query(
+#             alias="item-query",
+#             title="Query string",
+#             description="Query string for the items to search in the database that have a good match",
+#             min_length=3,
+#             max_length=50,
+#             pattern="^fixedquery$",
+#             deprecated=True,
+#         ),
+#     ] = None,
+# ):
+#     results = {"items": [{"item_id": "Foo"}, {"item_id": "Bar"}]}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+
+# ---------------------------------------------------------
+
+# to exclude parameters from openAPI
+# Query(include_in_schema=False)
+
+# @app.get("/items/")
+# async def read_items(
+#     hidden_query: Annotated[str | None, Query(include_in_schema=False)] = None,
+# ):
+#     if hidden_query:
+#         return {"hidden_query": hidden_query}
+#     else:
+#         return {"hidden_query": "Not found"}
+
+# ---------------------------------------------------------
+
+# we can add custom validation for validations that is not shown above using Query
+# e.g. after validating the value is a int, we want to check if it's even
+# we can do this by using Pydantic's AfterValidator inside Annotated
+
+# from pydantic import AfterValidator
+
+
+data = {
+    "isbn-9781529046137": "The Hitchhiker's Guide to the Galaxy",
+    "imdb-tt0371724": "The Hitchhiker's Guide to the Galaxy",
+    "isbn-9781439512982": "Isaac Asimov: The Complete Stories, Vol. 2",
+}
+
+
+def check_valid_id(id: str):
+    if not id.startswith(("isbn-", "imdb-")):
+        raise ValueError('Invalid ID format, it must start with "isbn-" or "imdb-"')
+    return id
 
 
 
-
-
-
-
-
-
-
-
+@app.get("/items/")
+async def read_items(
+    id: Annotated[str | None, AfterValidator(check_valid_id)] = None,
+):
+    if id:
+        item = data.get(id)
+    else:
+        id, item = random.choice(list(data.items()))
+    return {"id": id, "name": item}
 
 
 

@@ -83,7 +83,12 @@
 
 - fastapi can declare request body, path parameter, and query parameter at the same time
 
+---
 
+## query parameters and string validations
+
+- Annotated from typing is used to add metadata to parameters 
+- and using Query from fastapi to add validations
 
 
 
