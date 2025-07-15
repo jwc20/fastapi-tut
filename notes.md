@@ -90,9 +90,17 @@
 - Annotated from typing is used to add metadata to parameters 
 - and using Query from fastapi to add validations
 
+---
 
+## 10 body - nested models
 
+Pydantic model benefits
 
+- Editor support (completion everywhere!)
+- Data conversion (a.k.a. parsing / serialization)
+- Data validation
+- Schema documentation
+- Automatic docs
 
 
 
