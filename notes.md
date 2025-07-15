@@ -31,3 +31,23 @@
 - async
     - asynchronous code - wait for something to finish before doing something else
 ---
+
+
+## path parameters
+
+### terms
+
+- path parameter
+    - path parameter can be predefined using Enum
+    - cannot contain paths (ex: /files/{file_path} -> /files/home/johndoe/myfile.txt)
+        - can use path converter (ex: /files/{file_path:path})
+
+- parameter typing 
+
+- data conversion
+    - with type declaration, fastapi gives automatic request parsing
+
+- data validation
+    - data validation is performed by Pydantic
+
+- path converter
