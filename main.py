@@ -2,7 +2,7 @@ from enum import Enum
 from fastapi import FastAPI  # import fastapi
 from pydantic import BaseModel
 from typing import Annotated
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Path
 from pydantic import AfterValidator
 import random
 
@@ -78,11 +78,11 @@ async def read_file(file_path: str):
 
 
 # query parameters
-@app.get("/items/")
-async def read_items(skip: int = 0, limit: int = 10):
-    # The query is the set of key-value pairs that go after the ? in a URL, separated by & characters.
-    # http://127.0.0.1:8000/items/?skip=0&limit=10
-    return fake_items_db[skip : skip + limit]
+# @app.get("/items/")
+# async def read_items(skip: int = 0, limit: int = 10):
+#     # The query is the set of key-value pairs that go after the ? in a URL, separated by & characters.
+#     # http://127.0.0.1:8000/items/?skip=0&limit=10
+#     return fake_items_db[skip : skip + limit]
 
 
 # ---------------------------------------------------------
@@ -401,20 +401,67 @@ def check_valid_id(id: str):
 
 
 
-@app.get("/items/")
+# @app.get("/items/")
+# async def read_items(
+#     id: Annotated[str | None, AfterValidator(check_valid_id)] = None,
+# ):
+#     if id:
+#         item = data.get(id)
+#     else:
+#         id, item = random.choice(list(data.items()))
+#     return {"id": id, "name": item}
+
+
+# ---------------------------------------------------------
+
+# Path parameters and numerical validations
+
+# from typing import Annotated
+# from fastapi import FastAPI, Path, Query
+
+
+# @app.get("/items/{item_id}")
+# async def read_items(
+#     item_id: Annotated[int, Path(title="The ID of the item to get")], # adding title metadata
+#     q: Annotated[str | None, Query(alias="item-query")] = None,
+# ):
+#     results = {"item_id": item_id}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+
+# the doc mentions that if we have non-default value and not using Annotated could cause error 
+# using Annotated just avoids the error
+
+# @app.get("/items/{item_id}")
+# async def read_items(
+#     q: str, item_id: Annotated[int, Path(title="The ID of the item to get")]
+# ):
+#     results = {"item_id": item_id}
+#     if q:
+#         results.update({"q": q})
+#     return results
+
+
+
+## numeric validations 
+# gt: greater than
+# ge: greater than or equal
+# lt: less than
+# le: less than or equal
+
+
+@app.get("/items/{item_id}")
 async def read_items(
-    id: Annotated[str | None, AfterValidator(check_valid_id)] = None,
+    *,
+    item_id: Annotated[int, Path(title="The ID of the item to get", ge=0, le=1000)],
+    q: str,
+    size: Annotated[float, Query(gt=0, lt=10.5)],
 ):
-    if id:
-        item = data.get(id)
-    else:
-        id, item = random.choice(list(data.items()))
-    return {"id": id, "name": item}
-
-
-
-
-
-
-
-
+    results = {"item_id": item_id}
+    if q:
+        results.update({"q": q})
+    if size:
+        results.update({"size": size})
+    return results
