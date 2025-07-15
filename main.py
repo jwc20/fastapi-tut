@@ -1,5 +1,6 @@
 from enum import Enum
 from fastapi import FastAPI  # import fastapi
+from pydantic import BaseModel
 
 
 class ModelName(str, Enum):
@@ -110,18 +111,19 @@ async def read_item(item_id: str, q: str | None = None, short: bool = False):
 # ---------------------------------------------------------
 
 # multiple path and query parameters
-@app.get("/users/{user_id}/items/{item_id}")
-async def read_user_item(
-    user_id: int, item_id: str, q: str | None = None, short: bool = False
-):
-    item = {"item_id": item_id, "owner_id": user_id}
-    if q:
-        item.update({"q": q})
-    if not short:
-        item.update(
-            {"description": "This is an amazing item that has a long description"}
-        )
-    return item
+
+# @app.get("/users/{user_id}/items/{item_id}")
+# async def read_user_item(
+#     user_id: int, item_id: str, q: str | None = None, short: bool = False
+# ):
+#     item = {"item_id": item_id, "owner_id": user_id}
+#     if q:
+#         item.update({"q": q})
+#     if not short:
+#         item.update(
+#             {"description": "This is an amazing item that has a long description"}
+#         )
+#     return item
 
 
 # ---------------------------------------------------------
@@ -146,3 +148,74 @@ async def read_user_item(
 # limit, an optional int.
 
 # ---------------------------------------------------------
+
+
+# declare request body model using BaseModel from pydantic
+class Item(BaseModel):
+    name: str
+    description: str | None = None 
+    price: float 
+    tax: float | None = None 
+
+
+# @app.post("/items/")
+# async def create_item(item: Item): 
+#     return item
+
+# ---------------------------------------------------------
+
+@app.post("/items/")
+async def create_item(item: Item):
+    item_dict = item.dict()
+    if item.tax is not None:
+        price_with_tax = item.price + item.tax
+        item_dict.update({"price_with_tax": price_with_tax})
+    return item_dict
+
+
+# ---------------------------------------------------------
+
+# request body + path parameters
+# fastapi will automatically recognize that the function parameter should be taken from the
+# path parameter if it has the same name ('item_id')
+# and recognize that the function parameter that was declared by the Pydantic model 
+# should be taken from the request body
+
+# @app.put("/items/{item_id}")
+# async def update_item(item_id: int, item: Item):
+#     return {"item_id": item_id, **item.dict()}
+
+# ---------------------------------------------------------
+
+# request body + path + query parameters 
+
+# **item.dict() 
+#  dictionary unpacking operator 
+
+
+@app.put("/items/{item_id}")
+async def update_item(item_id: int, item: Item, q: str | None = None):
+    result = {"item_id": item_id, **item.dict()} # merge contents from item's dictionary to result
+    if q:
+        result.update({"q": q})
+    return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

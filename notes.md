@@ -70,6 +70,39 @@
 
 - query parameter type conversion
 
+---
+
+## request body
+
+### terms 
+
+- request body 
+    - data that is sent from client to api and get a response
+    - in fastapi, use Pydantic models to declare request body
+        - `from pydantic import BaseModel`
+
+- fastapi can declare request body, path parameter, and query parameter at the same time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
