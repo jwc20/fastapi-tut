@@ -1,6 +1,8 @@
-def main():
-    print("Hello from fastapi-tut!")
+from fastapi import FastAPI # import fastapi
 
+app = FastAPI() # init fastapi instance
 
-if __name__ == "__main__":
-    main()
+# create path/endpoint/route operation, operation refers to the one of the HTTP methods (post, get, put, delete, ... )
+@app.get("/") # define path operation decorator
+async def root():
+    return {"message": "Hello World"}
