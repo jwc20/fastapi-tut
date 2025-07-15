@@ -5,6 +5,9 @@ from typing import Annotated
 from fastapi import FastAPI, Query, Path
 from pydantic import AfterValidator
 import random
+from pydantic import BaseModel, Field
+
+from typing import Annotated, Literal
 
 
 class ModelName(str, Enum):
@@ -140,12 +143,14 @@ async def read_item(item_id: str, q: str | None = None, short: bool = False):
 #     item = {"item_id": item_id, "needy": needy}
 #     return item
 
+
 @app.get("/items/{item_id}")
 async def read_user_item(
     item_id: str, needy: str, skip: int = 0, limit: int | None = None
 ):
     item = {"item_id": item_id, "needy": needy, "skip": skip, "limit": limit}
     return item
+
 
 # needy, a required str.
 # skip, an int with a default value of 0.
@@ -157,16 +162,17 @@ async def read_user_item(
 # declare request body model using BaseModel from pydantic
 class Item(BaseModel):
     name: str
-    description: str | None = None 
-    price: float 
-    tax: float | None = None 
+    description: str | None = None
+    price: float
+    tax: float | None = None
 
 
 # @app.post("/items/")
-# async def create_item(item: Item): 
+# async def create_item(item: Item):
 #     return item
 
 # ---------------------------------------------------------
+
 
 @app.post("/items/")
 async def create_item(item: Item):
@@ -182,7 +188,7 @@ async def create_item(item: Item):
 # request body + path parameters
 # fastapi will automatically recognize that the function parameter should be taken from the
 # path parameter if it has the same name ('item_id')
-# and recognize that the function parameter that was declared by the Pydantic model 
+# and recognize that the function parameter that was declared by the Pydantic model
 # should be taken from the request body
 
 # @app.put("/items/{item_id}")
@@ -191,18 +197,22 @@ async def create_item(item: Item):
 
 # ---------------------------------------------------------
 
-# request body + path + query parameters 
+# request body + path + query parameters
 
-# **item.dict() 
-#  dictionary unpacking operator 
+# **item.dict()
+#  dictionary unpacking operator
 
 
 @app.put("/items/{item_id}")
 async def update_item(item_id: int, item: Item, q: str | None = None):
-    result = {"item_id": item_id, **item.dict()} # merge contents from item's dictionary to result
+    result = {
+        "item_id": item_id,
+        **item.dict(),
+    }  # merge contents from item's dictionary to result
     if q:
         result.update({"q": q})
     return result
+
 
 # ---------------------------------------------------------
 
@@ -235,7 +245,7 @@ async def update_item(item_id: int, item: Item, q: str | None = None):
 
 # query as the default value or in Annotated
 
-# this is not allowed, since it's not clear if the default value is rick or morty 
+# this is not allowed, since it's not clear if the default value is rick or morty
 # q: Annotated[str, Query(default="rick")] = "morty"
 
 # should be
@@ -302,7 +312,7 @@ async def update_item(item_id: int, item: Item, q: str | None = None):
 #     if q:
 #         results.update({"q": q})
 #     return results
-# 
+#
 
 # ---------------------------------------------------------
 """
@@ -400,7 +410,6 @@ def check_valid_id(id: str):
     return id
 
 
-
 # @app.get("/items/")
 # async def read_items(
 #     id: Annotated[str | None, AfterValidator(check_valid_id)] = None,
@@ -431,7 +440,7 @@ def check_valid_id(id: str):
 #     return results
 
 
-# the doc mentions that if we have non-default value and not using Annotated could cause error 
+# the doc mentions that if we have non-default value and not using Annotated could cause error
 # using Annotated just avoids the error
 
 # @app.get("/items/{item_id}")
@@ -444,8 +453,7 @@ def check_valid_id(id: str):
 #     return results
 
 
-
-## numeric validations 
+## numeric validations
 # gt: greater than
 # ge: greater than or equal
 # lt: less than
@@ -465,3 +473,22 @@ async def read_items(
     if size:
         results.update({"size": size})
     return results
+
+
+# ---------------------------------------------------------
+
+
+class FilterParams(BaseModel):
+    # can add this to prevent extra data sending
+    # model_config = {"extra": "forbid"}
+
+    limit: int = Field(100, gt=0, le=100)
+    offset: int = Field(0, ge=0)
+    order_by: Literal["created_at", "updated_at"] = "created_at"
+    tags: list[str] = []
+
+
+@app.get("/items/")
+async def read_items(filter_query: Annotated[FilterParams, Query()]):
+    return filter_query
+
