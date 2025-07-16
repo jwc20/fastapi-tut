@@ -123,9 +123,32 @@ File()
 
 you can also declare a group of examples with additional information that will be added to their JSON Schemas inside of OpenAPI.
 
+---
+
+## 17 response model - return type 
+
+### terms:
+
+- response 
+- return type 
+- type annotations 
 
 
+- we want the model to filter/remove some data, we can use classes and inheritance to take advantage of function type annotations to get better support in the editor and tools, and still get the FastAPI data filtering.
 
+```python 
+class BaseUser(BaseModel): 
+    username: str 
+    email: EmailStr 
+    full_name: str | None = None 
+
+class UserIn(BaseUser): 
+    password: str 
+
+@app.post("/user/") 
+async def create_user(user: UserIn) -> BaseUser: 
+    return user 
+```
 
 
 
