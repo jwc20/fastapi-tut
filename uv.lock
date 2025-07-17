@@ -467,6 +467,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "python-multipart" },
     { name = "reflex" },
+    { name = "sqlmodel" },
     { name = "websockets" },
 ]
 
@@ -478,6 +479,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "reflex", specifier = ">=0.8.2" },
+    { name = "sqlmodel", specifier = ">=0.0.24" },
     { name = "websockets", specifier = ">=15.0.1" },
 ]
 
